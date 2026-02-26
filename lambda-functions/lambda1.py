@@ -7,7 +7,7 @@ sqs = boto3.client('sqs')
 SQS_QUEUE_URL = os.environ['SQS_QUEUE_URL']
 
 # Configuration
-ALLOWED_CITIES = ['new york']
+ALLOWED_CITIES = ['manhattan']
 
 def validate_booking(slots):
     # 1. Validate Location
@@ -95,5 +95,5 @@ def lambda_handler(event, context):
                 "dialogAction": {"type": "Close"},
                 "intent": {"name": intent_name, "slots": slots, "state": "Fulfilled"}
             },
-            "messages": [{"contentType": "PlainText", "content": "Your reservation is confirmed. See you soon!"}]
+            "messages": [{"contentType": "PlainText", "content": "You're all set. Check your email shortly for my suggestions. Have a good day!"}]
         }

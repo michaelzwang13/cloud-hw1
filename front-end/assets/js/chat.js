@@ -7,7 +7,16 @@ $(document).ready(function() {
 
   $(window).load(function() {
     $messages.mCustomScrollbar();
-    insertResponseMessage('Hi there, I\'m your personal Concierge. How can I help?');
+    callChatbotApi('hi').then((response) => {
+      var data = response.data;
+      if (data.messages && data.messages.length > 0) {
+        for (var message of data.messages) {
+          if (message.type === 'unstructured') {
+            insertResponseMessage(message.unstructured.text);
+          }
+        }
+      }
+    });
   });
 
   function updateScrollbar() {
@@ -77,13 +86,10 @@ $(document).ready(function() {
               console.log('not implemented');
             }
           }
-        } else {
-          insertResponseMessage('Oops, something went wrong. Please try again.');
         }
       })
       .catch((error) => {
         console.log('an error occurred', error);
-        insertResponseMessage('Oops, something went wrong. Please try again.');
       });
   }
 
