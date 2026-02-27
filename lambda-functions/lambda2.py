@@ -21,10 +21,10 @@ credentials = boto3.Session().get_credentials().get_frozen_credentials()
 awsauth = AWS4Auth(credentials.access_key, credentials.secret_key, REGION, 'es',
                    session_token=credentials.token)
 
-def get_random_restaurant(cuisine):
+def get_random_restaurants(cuisine, count=3):
     url = f'{OPENSEARCH_ENDPOINT}/restaurants/_search'
     query = {
-        'size': 1,
+        'size': count,
         'query': {
             'function_score': {
                 'query': {'match': {'cuisine': cuisine}},
@@ -36,29 +36,30 @@ def get_random_restaurant(cuisine):
     response = requests.get(url, auth=awsauth,
                             headers={'Content-Type': 'application/json'},
                             data=json.dumps(query))
-    print(f'OpenSearch status: {response.status_code}, body: {response.text[:500]}')
     hits = response.json().get('hits', {}).get('hits', [])
-    if not hits:
-        return None
-    return hits[0]['_source']['id']
+    return [hit['_source']['id'] for hit in hits]
 
 def get_restaurant_details(restaurant_id):
     response = table.get_item(Key={'id': restaurant_id})
     return response.get('Item')
 
-def send_email(to_email, restaurant, booking):
-    rating = float(restaurant.get('rating', 0))
-    subject = 'Your Restaurant Suggestion from Dining Concierge'
+def send_email(to_email, restaurants, booking):
+    subject = 'Your Restaurant Suggestions from Dining Concierge'
+
+    recommendations = ''
+    for i, r in enumerate(restaurants, 1):
+        rating = float(r.get('rating', 0))
+        recommendations += f"""
+{i}. {r.get('name')}
+   Address: {r.get('address')}
+   Rating: {rating} / 5
+   Phone: {r.get('phone', 'N/A')}
+"""
+
     body = f"""Hello!
 
-Based on your request, here is a restaurant suggestion:
-
-Restaurant: {restaurant.get('name')}
-Cuisine: {restaurant.get('cuisine', '').title()}
-Address: {restaurant.get('address')}
-Rating: {rating} / 5
-Phone: {restaurant.get('phone', 'N/A')}
-
+Based on your request, here are {len(restaurants)} {restaurants[0].get('cuisine', '').title()} restaurant suggestions:
+{recommendations}
 Reservation Details:
 - Date: {booking.get('date')}
 - Time: {booking.get('time')}
@@ -101,17 +102,22 @@ def lambda_handler(event, context):
         sqs.delete_message(QueueUrl=SQS_QUEUE_URL, ReceiptHandle=receipt_handle)
         return
 
-    restaurant_id = get_random_restaurant(cuisine)
-    if not restaurant_id:
-        print(f'No restaurant found for cuisine: {cuisine}')
+    restaurant_ids = get_random_restaurants(cuisine)
+    if not restaurant_ids:
+        print(f'No restaurants found for cuisine: {cuisine}')
         return
 
-    restaurant = get_restaurant_details(restaurant_id)
-    if not restaurant:
-        print(f'Restaurant {restaurant_id} not found in DynamoDB')
+    restaurants = []
+    for rid in restaurant_ids:
+        details = get_restaurant_details(rid)
+        if details:
+            restaurants.append(details)
+
+    if not restaurants:
+        print(f'Could not fetch restaurant details from DynamoDB')
         return
 
-    send_email(email, restaurant, booking)
-    print(f'Email sent to {email} for {cuisine} restaurant: {restaurant.get("name")}')
+    send_email(email, restaurants, booking)
+    print(f'Email sent to {email} with {len(restaurants)} {cuisine} restaurants')
 
     sqs.delete_message(QueueUrl=SQS_QUEUE_URL, ReceiptHandle=receipt_handle)
