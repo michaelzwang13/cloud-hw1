@@ -36,6 +36,7 @@ def get_random_restaurant(cuisine):
     response = requests.get(url, auth=awsauth,
                             headers={'Content-Type': 'application/json'},
                             data=json.dumps(query))
+    print(f'OpenSearch status: {response.status_code}, body: {response.text[:500]}')
     hits = response.json().get('hits', {}).get('hits', [])
     if not hits:
         return None
