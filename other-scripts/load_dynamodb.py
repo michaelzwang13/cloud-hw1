@@ -8,7 +8,7 @@ TABLE_NAME = 'yelp-restaurants'
 dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
 table = dynamodb.Table(TABLE_NAME)
 
-with open('restaurants.json', 'r') as f:
+with open('../data/restaurants.json', 'r') as f:
     data = json.load(f)
 
 timestamp = datetime.now(timezone.utc).isoformat()

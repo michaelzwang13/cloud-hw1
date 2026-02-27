@@ -1,8 +1,11 @@
 import requests
 import json
 import time
+import os
+from dotenv import load_dotenv
 
-YELP_API_KEY = 'MrpZvwd1FixrrW6dRVG88ETc-GNsgFEtK9FigKYTjg5O2x0bbfKkE0OPkv22ALUk6_pOowArt7moK5NVIbMRD6CINeziPHGX5-e6YeUyPBCnZnyO_GwIHTmri4mgaXYx'
+load_dotenv('../.env')
+YELP_API_KEY = os.environ['YELP_API_KEY']
 HEADERS = {'Authorization': f'Bearer {YELP_API_KEY}'}
 ENDPOINT = 'https://api.yelp.com/v3/businesses/search'
 
