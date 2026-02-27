@@ -1,6 +1,6 @@
 # Cloud Computing Spring 2026 - HW 1
 
-*Chatbot Concierge*
+*Dining Suggestions Concierge*
 
 Frontend starter repository for HW 1 of the Cloud Computing & Big Data
 class at New York University.
