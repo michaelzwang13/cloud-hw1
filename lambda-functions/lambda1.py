@@ -83,6 +83,7 @@ def lambda_handler(event, context):
             'time': slot_value('Time'),
             'partyCount': slot_value('PartyCount'),
             'cuisine': slot_value('Cuisine'),
+            'email': slot_value('Email'),
         }
 
         sqs.send_message(
