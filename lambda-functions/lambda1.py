@@ -8,6 +8,7 @@ SQS_QUEUE_URL = os.environ['SQS_QUEUE_URL']
 
 # Configuration
 ALLOWED_CITIES = ['manhattan']
+ALLOWED_CUISINES = ['chinese', 'indian', 'mexican', 'japanese', 'italian']
 
 def validate_booking(slots):
     # 1. Validate Location
@@ -20,7 +21,17 @@ def validate_booking(slots):
                 'message': f"Sorry, we only have restaurants in {', '.join(ALLOWED_CITIES).title()}. Which would you like?"
             }
 
-    # 2. Validate Date
+    # 2. Validate Cuisine
+    if slots.get('Cuisine') and slots['Cuisine'].get('value'):
+        cuisine = slots['Cuisine']['value']['interpretedValue'].lower()
+        if cuisine not in ALLOWED_CUISINES:
+            return {
+                'isValid': False,
+                'violatedSlot': 'Cuisine',
+                'message': f"Sorry, we only support {', '.join(c.title() for c in ALLOWED_CUISINES)} cuisines. Which would you like?"
+            }
+
+    # 3. Validate Date
     if slots.get('Date') and slots['Date'].get('value'):
         booking_date_str = slots['Date']['value']['interpretedValue']
         booking_date = datetime.datetime.strptime(booking_date_str, '%Y-%m-%d').date()
